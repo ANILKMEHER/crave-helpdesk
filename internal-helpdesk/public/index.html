@@ -1,0 +1,1210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crave HelpDesk | Enterprise Portal</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='45' fill='%230A58CA'/><text x='50%' y='65%' font-family='sans-serif' font-size='40' font-weight='bold' fill='white' text-anchor='middle'>H</text></svg>">
+    <link href="https://fonts.googleapis.com/css2?family=Inclusive+Sans&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --crave-blue: #0A58CA;
+            --crave-dark: #1E293B;
+            --crave-light: #F1F5F9;
+            --border-color: #CBD5E1;
+            --card-bg: #FFFFFF;
+            --text-main: #0F172A;
+            --text-sub: #475569;
+            --sidebar-grad-start: #FFFFFF;
+            --sidebar-grad-end: #E2E8F0;
+            --badge-open-bg: #FEE2E2; --badge-open-txt: #DC2626;
+            --badge-prog-bg: #FEF3C7; --badge-prog-txt: #D97706;
+            --badge-hold-bg: #FFEDD5; --badge-hold-txt: #EA580C;
+            --badge-closed-bg: #D1FAE5; --badge-closed-txt: #16A34A;
+        }
+
+        [data-theme="dark"] {
+            --crave-blue: #3B82F6;
+            --crave-dark: #F8FAFC;
+            --crave-light: #0B0F19;
+            --border-color: #334155;
+            --card-bg: #1E293B;
+            --text-main: #F8FAFC;
+            --text-sub: #94A3B8;
+            --sidebar-grad-start: #1E293B;
+            --sidebar-grad-end: #0F172A;
+            --badge-open-bg: #7F1D1D; --badge-open-txt: #FCA5A5;
+            --badge-prog-bg: #78350F; --badge-prog-txt: #FDE68A;
+            --badge-hold-bg: #7C2D12; --badge-hold-txt: #FED7AA;
+            --badge-closed-bg: #064E3B; --badge-closed-txt: #A7F3D0;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+        body { 
+            background-color: var(--crave-light); 
+            color: var(--text-main); 
+            display: flex; 
+            height: 100vh;
+            max-height: 100vh;
+            overflow: hidden;
+            font-size: 13px;
+        }
+
+        .sidebar { 
+            width: 260px; min-width: 210px; max-width: 400px;
+            background: linear-gradient(135deg, var(--sidebar-grad-start) 0%, var(--sidebar-grad-end) 100%);
+            border-right: 1px solid var(--border-color); display: flex; flex-direction: column; position: fixed; height: 100vh; z-index: 100;
+        }
+        .sidebar-resizer { position: absolute; right: 0; top: 0; width: 4px; height: 100%; cursor: col-resize; background: transparent; }
+        .sidebar-resizer:hover { background: var(--crave-blue); }
+
+        .brand { padding: 16px 20px; display: flex; flex-direction: column; gap: 8px; border-bottom: 1px solid var(--border-color); width: 100%; }
+        .brand-logo-wrapper { width: 100%; height: 60px; display: flex; align-items: center; }
+        .brand img { max-height: 100%; max-width: 100%; object-fit: contain; }
+        
+        .brand-text { font-family: 'Inclusive Sans', sans-serif; font-size: 18px; color: #000000; font-weight: normal; }
+        [data-theme="dark"] .brand-text { color: #FFFFFF; }
+        .brand-text span { font-family: 'Times New Roman', Times, serif; font-weight: bold; color: #0A58CA; margin-left: 2px; }
+        [data-theme="dark"] .brand-text span { color: #3B82F6; }
+
+        .nav-menu { padding: 12px 8px; flex-grow: 1; display: flex; flex-direction: column; gap: 4px; }
+        .nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: 6px; color: var(--text-sub); font-weight: 500; text-decoration: none; cursor: pointer; }
+        .nav-item:hover, .nav-item.active { background-color: rgba(10, 88, 202, 0.08); color: var(--crave-blue); }
+
+        .sidebar-footer { padding: 12px 16px; border-top: 1px solid var(--border-color); font-size: 11px; color: var(--text-sub); display: flex; flex-direction: column; gap: 6px; }
+        .social-links { display: flex; gap: 10px; font-size: 14px; }
+        .sidebar-footer a { color: var(--text-sub); text-decoration: none; font-weight: 500; }
+        .sidebar-footer a:hover { color: var(--crave-blue); text-decoration: underline; }
+
+        .main-content { margin-left: 260px; flex-grow: 1; display: flex; flex-direction: column; height: 100vh; max-height: 100vh; position: relative; }
+        .top-navbar { height: 55px; background: var(--card-bg); border-bottom: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between; padding: 0 24px; }
+        .page-title { font-size: 16px; font-weight: 600; color: var(--text-main); }
+        
+        .theme-btn { background: transparent; border: none; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 50%; }
+        .theme-btn .fa-sun { color: #F59E0B; }
+        .theme-btn .fa-moon { color: #93C5FD; }
+
+        .workspace { padding: 12px 24px; flex-grow: 1; overflow-y: auto; height: calc(100vh - 85px); padding-bottom: 40px; }
+        .panel { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; padding: 14px; box-shadow: 0 1px 2px rgba(0,0,0,0.02); display: none; height: 100%; max-height: 100%; overflow-y: auto; }
+        .panel.active { display: block; }
+
+        .slicer-ribbon { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 6px; padding: 6px 12px; margin-bottom: 12px; display: flex; align-items: center; gap: 12px; }
+        .slicer-label { font-size: 11px; font-weight: 600; color: var(--text-sub); text-transform: uppercase; }
+        .slicer-control { padding: 4px 6px; border-radius: 4px; border: 1px solid var(--border-color); background: var(--crave-light); color: var(--text-main); font-size: 12px; }
+
+        .metrics-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 12px; }
+        .metric-card { background: var(--crave-light); border: 1px solid var(--border-color); border-radius: 6px; padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; }
+        .metric-info h4 { font-size: 10px; color: var(--text-sub); text-transform: uppercase; }
+        .metric-info p { font-size: 18px; font-weight: 700; color: var(--text-main); }
+        .metric-icon { font-size: 14px; color: var(--text-sub); }
+
+        .chart-visual-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 12px; }
+        .chart-container-box { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 6px; padding: 10px; height: 160px; display: flex; flex-direction: column; }
+        .chart-container-box h4 { font-size: 11px; margin-bottom: 4px; color: var(--text-main); text-overflow: ellipsis; overflow: hidden; white-space: nowrap; }
+        .chart-canvas-wrapper { position: relative; flex-grow: 1; height: 120px; }
+
+        .analytics-section { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+        .analytics-card { border: 1px solid var(--border-color); border-radius: 6px; padding: 10px; background: var(--card-bg); max-height: 120px; overflow-y: auto; }
+        .analytics-card h4 { font-size: 11px; margin-bottom: 6px; color: var(--text-main); border-bottom: 1px solid var(--border-color); padding-bottom: 4px; }
+        .data-row { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px dotted var(--border-color); font-size: 11px; color: var(--text-main); }
+
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 8px; }
+        .form-group { margin-bottom: 8px; display: flex; flex-direction: column; gap: 2px; }
+        .form-group.full-width { grid-column: span 2; }
+        label { font-size: 11px; font-weight: 600; color: var(--text-main); }
+        input, textarea, select { width: 100%; padding: 6px 10px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 12px; background: var(--card-bg); color: var(--text-main); outline: none; }
+        
+        .console-header-box { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; }
+        .instant-search-input { width: 250px; padding: 6px 12px; font-size: 12px; border-radius: 20px; border: 1px solid var(--border-color); background: var(--crave-light); color: var(--text-main); }
+
+        .ticket-list-item { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 6px; padding: 10px; margin-bottom: 6px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; }
+        .ticket-list-item.breached { border-left: 4px solid #DC2626; }
+        .ticket-meta { display: flex; flex-direction: column; gap: 2px; width: 100%; }
+        .ticket-title-row { display: flex; align-items: center; gap: 8px; }
+        .ref-tag { font-size: 10px; font-weight: 700; background: #F1F5F9; color: #475569; padding: 1px 4px; border-radius: 2px; }
+        
+        .badge { font-size: 9px; font-weight: 700; padding: 1px 6px; border-radius: 10px; text-transform: uppercase; }
+        .badge.Open { background: var(--badge-open-bg); color: var(--badge-open-txt); }
+        .badge.In-Progress { background: var(--badge-prog-bg); color: var(--badge-prog-txt); }
+        .badge.On-Hold { background: var(--badge-hold-bg); color: var(--badge-hold-txt); }
+        .badge.Closed { background: var(--badge-closed-bg); color: var(--badge-closed-txt); }
+        
+        .p-badge { font-size: 9px; font-weight: 600; padding: 1px 3px; border-radius: 2px; background: #E2E8F0; color: #475569; }
+        .p-badge.Urgent { background: #7F1D1D; color: #FFFFFF; }
+
+        .btn { background: var(--crave-blue); color: white; padding: 6px 12px; border: none; border-radius: 4px; font-size: 12px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; width: fit-content; }
+        .btn-sec { background: #E2E8F0; color: #475569; padding: 4px 8px; font-size: 11px; border: none; border-radius: 4px; cursor: pointer; }
+
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); backdrop-filter: blur(1px); display: none; align-items: center; justify-content: center; z-index: 1000; }
+        .modal-overlay.active { display: flex; }
+        .modal-window { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; max-width: 530px; width: 100%; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 10px 15px rgba(0,0,0,0.1); }
+        .modal-header { padding: 10px 16px; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between; }
+        .modal-body { padding: 12px 16px; overflow-y: auto; max-height: 60vh; }
+        .modal-close-btn { background: transparent; border: none; font-size: 18px; color: var(--text-sub); cursor: pointer; }
+
+        .portal-bottom-footer { position: absolute; bottom: 0; left: 0; width: 100%; height: 26px; border-top: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between; padding: 0 24px; font-size: 10px; color: var(--text-sub); background: var(--card-bg); z-index: 90; }
+
+        /* KBA & FAQ STYLES */
+        .kba-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-top: 10px; }
+        .kba-card { background: var(--crave-light); border: 1px solid var(--border-color); border-radius: 6px; padding: 12px; cursor: pointer; transition: transform 0.15s ease; }
+        .kba-card:hover { transform: translateY(-2px); border-color: var(--crave-blue); }
+        .kba-card h4 { color: var(--crave-blue); font-size: 13px; margin-bottom: 4px; display: flex; align-items: center; gap: 6px; }
+        .kba-card p { color: var(--text-sub); font-size: 11px; line-height: 1.4; }
+
+        .faq-accordion { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+        .faq-item { border: 1px solid var(--border-color); border-radius: 6px; background: var(--card-bg); overflow: hidden; }
+        .faq-question { padding: 10px 14px; font-weight: 600; font-size: 12px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; background: var(--crave-light); }
+        .faq-answer { padding: 10px 14px; font-size: 11px; color: var(--text-sub); line-height: 1.5; border-top: 1px solid var(--border-color); display: none; }
+        .faq-item.active .faq-answer { display: block; }
+
+        /* CHATBOT ICON WRAPPER FOOTER BOUNDS */
+        .chat-anchor-system-group { position: fixed; bottom: 35px; right: 24px; display: flex; align-items: flex-end; gap: 12px; z-index: 1099; }
+
+        .chat-proactive-callout-bubble {
+            background: #FFFFFF; border: 1px solid #CBD5E1; border-radius: 8px; padding: 12px 34px 12px 16px; max-width: 290px;
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); position: relative; color: #1F2937; line-height: 1.4; font-size: 12px;
+            border-left: 4px solid #0A58CA; transition: opacity 0.2s ease, transform 0.2s ease;
+        }
+        .chat-proactive-callout-bubble.hidden { opacity: 0; transform: translateY(10px); pointer-events: none; }
+        .chat-proactive-dismiss { position: absolute; top: 6px; right: 10px; background: transparent; border: none; font-size: 14px; color: #9CA3AF; cursor: pointer; }
+
+        .chat-launcher-btn { 
+            width: 48px; height: 48px; background: linear-gradient(135deg, #1E293B 0%, #0A58CA 100%); 
+            color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; 
+            font-size: 20px; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.15); border: 2px solid #000000; flex-shrink: 0;
+        }
+
+        .chat-widget-container { 
+            position: fixed; bottom: 95px; right: 24px; width: 340px; height: 440px; 
+            background: #FFFFFF; border: 2px solid #000000; border-radius: 12px; 
+            box-shadow: 0 12px 32px rgba(0,0,0,0.15); display: flex; flex-direction: column; 
+            overflow: hidden; z-index: 1100; transition: transform 0.25s ease, opacity 0.25s ease;
+            transform: translateY(20px); opacity: 0; pointer-events: none; 
+        }
+        .chat-widget-container.active { transform: translateY(0); opacity: 1; pointer-events: auto; }
+        
+        .chat-header { 
+            background: linear-gradient(135deg, #1E293B 0%, #0F172A 100%); color: white; padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; 
+            border-bottom: 2px solid #000000;
+        }
+        .chat-header-info { display: flex; align-items: center; gap: 8px; }
+        .chat-avatar-frame { 
+            width: 24px; height: 24px; border-radius: 50%; border: 1px solid #FFFFFF; background: #0A58CA; overflow: hidden; display: flex; align-items: center; justify-content: center;
+            background-image: url('https://i.postimg.cc/qBFwK54N/mivi-avatar.png'); background-size: cover; background-position: center;
+        }
+        .chat-close-minimize { background: transparent; border: none; color: white; cursor: pointer; font-size: 14px; padding: 2px; }
+        
+        .chat-body { 
+            flex-grow: 1; padding: 12px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; 
+            background-color: #FAF9F6;
+            background-image: radial-gradient(rgba(0,0,0,0.04) 1px, transparent 0);
+            background-size: 12px 12px;
+        }
+        
+        .chat-bubble { max-width: 85%; padding: 8px 12px; border-radius: 8px; font-size: 11px; line-height: 1.4; border: 1px solid #000000; }
+        .chat-bubble.agent { background: #FFFFFF; color: #000000; align-self: flex-start; border-bottom-left-radius: 2px; box-shadow: 2px 2px 0px #000000; }
+        .chat-bubble.user { background: #0A58CA; color: white; align-self: flex-end; border-bottom-right-radius: 2px; box-shadow: 2px 2px 0px #000000; }
+        
+        .chat-options-box { display: flex; flex-direction: column; gap: 6px; margin-top: 4px; align-self: flex-end; width: auto; align-items: flex-end; }
+        .chat-opt-btn { background: #FFFFFF; border: 1px solid #0A58CA; color: #0A58CA; padding: 6px 12px; border-radius: 16px; text-align: right; font-size: 11px; cursor: pointer; font-weight: 500; width: fit-content; transition: background 0.15s; }
+        .chat-opt-btn:hover { background: rgba(10, 88, 202, 0.05); }
+        
+        .chat-footer { padding: 8px; border-top: 2px solid #000000; background: #FFFFFF; display: flex; gap: 6px; align-items: center; }
+        .chat-input { flex-grow: 1; padding: 6px 12px; border: 1px solid #000000; border-radius: 4px; font-size: 12px; background: #FFFFFF; color: #000000; }
+    </style>
+</head>
+<body onclick="handleGlobalClickAwayCloseEvent(event)">
+
+    <div class="sidebar" id="appSidebar">
+        <div class="sidebar-resizer" id="sidebarResizer"></div>
+        <div class="brand">
+            <div class="brand-logo-wrapper">
+                <img src="https://i.postimg.cc/5trMvZZj/Crave-Logo.jpg" alt="Crave Logo">
+            </div>
+            <div class="brand-text">Crave <span>Helpdesk</span></div>
+        </div>
+        <div class="nav-menu">
+            <div class="nav-item active" id="nav-dashboard" onclick="navigate('dashboard')"><i class="fa-solid fa-chart-pie"></i> Overview</div>
+            <div class="nav-item" id="nav-submit" onclick="navigate('submit')"><i class="fa-solid fa-square-plus"></i> Raise Ticket</div>
+            <div class="nav-item" id="nav-queue" onclick="navigate('queue'); loadQueue();"><i class="fa-solid fa-list-check"></i> Ticket Console</div>
+            <div class="nav-item" id="nav-kba" onclick="navigate('kba')"><i class="fa-solid fa-book-bookmark"></i> Knowledge Base (KBA)</div>
+            <div class="nav-item" id="nav-faq" onclick="navigate('faq')"><i class="fa-solid fa-circle-question"></i> Help & FAQs</div>
+            <div class="nav-item" id="nav-admin" onclick="navigate('admin'); loadAdminUsersList();" style="display:none;">
+                <i class="fa-solid fa-user-shield"></i> Role Manager
+            </div>
+        </div>
+        
+        <div class="sidebar-footer">
+            <div style="line-height:1.3; font-size: 10px;">For any feedback / suggestions write us at: <br><a href="mailto:support@craveinfotech.com">support@craveinfotech.com</a></div>
+            <div class="social-links" style="margin-top: 2px;">
+                <a href="https://www.linkedin.com/company/crave-infotech/" target="_blank"><i class="fa-brands fa-linkedin"></i></a>
+                <a href="https://www.craveinfotech.com" target="_blank"><i class="fa-solid fa-globe"></i></a>
+            </div>
+        </div>
+    </div>
+
+    <div class="main-content" id="appMainContent">
+        <div class="top-navbar">
+            <div class="page-title" id="pageTitle">Overview View</div>
+            <button class="theme-btn" id="themeToggleButton" onclick="togglePlatformThemeMode()" title="Toggle Theme Interface"></button>
+        </div>
+
+        <div class="workspace">
+
+            <!-- MODULE 1: OVERVIEW -->
+            <div id="panel-dashboard" class="panel active">
+                <div class="slicer-ribbon">
+                    <div>
+                        <span class="slicer-label">Year:</span>
+                        <select class="slicer-control" id="slicerYear" onchange="loadAnalytics()"></select>
+                    </div>
+                    <div>
+                        <span class="slicer-label">Month:</span>
+                        <select class="slicer-control" id="slicerMonth" onchange="loadAnalytics()">
+                            <option value="all">All Months</option>
+                            <option value="01">January</option>
+                            <option value="02">February</option>
+                            <option value="03">March</option>
+                            <option value="04">April</option>
+                            <option value="05">May</option>
+                            <option value="06">June</option>
+                            <option value="07">July</option>
+                            <option value="08">August</option>
+                            <option value="09">September</option>
+                            <option value="10">October</option>
+                            <option value="11">November</option>
+                            <option value="12">December</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <div class="metric-info"><h4>Open Backlog</h4><p id="m-open" style="color:var(--badge-open-txt);">0</p></div>
+                        <div class="metric-icon"><i class="fa-solid fa-clock"></i></div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-info"><h4>In Progress</h4><p id="m-progress" style="color:var(--badge-prog-txt);">0</p></div>
+                        <div class="metric-icon"><i class="fa-solid fa-spinner"></i></div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-info"><h4>On Hold</h4><p id="m-hold" style="color:var(--badge-hold-txt);">0</p></div>
+                        <div class="metric-icon"><i class="fa-solid fa-pause"></i></div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-info"><h4>Resolved Logs</h4><p id="m-closed" style="color:var(--badge-closed-txt);">0</p></div>
+                        <div class="metric-icon"><i class="fa-solid fa-check-double"></i></div>
+                    </div>
+                </div>
+
+                <div class="chart-visual-grid">
+                    <div class="chart-container-box">
+                        <h4>Allocation Loads (By Category)</h4>
+                        <div class="chart-canvas-wrapper"><canvas id="categoryBarChartCanvas"></canvas></div>
+                    </div>
+                    <div class="chart-container-box">
+                        <h4>Ratio Breakdown (By Status)</h4>
+                        <div class="chart-canvas-wrapper"><canvas id="statusPieChartCanvas"></canvas></div>
+                    </div>
+                    <div class="chart-container-box">
+                        <h4>Priority Load Volume</h4>
+                        <div class="chart-canvas-wrapper"><canvas id="priorityBarChartCanvas"></canvas></div>
+                    </div>
+                </div>
+
+                <div class="analytics-section">
+                    <div class="analytics-card">
+                        <h4>Priority Breakdown Volume Counts</h4>
+                        <div id="box-priorities-breakdown">
+                            <div class="data-row"><span>🔴 Urgent Priority</span><strong id="p-count-urgent">0</strong></div>
+                            <div class="data-row"><span>🟠 High Priority</span><strong id="p-count-high">0</strong></div>
+                            <div class="data-row"><span>🔵 Medium Priority</span><strong id="p-count-medium">0</strong></div>
+                            <div class="data-row"><span>⚪ Low Priority</span><strong id="p-count-low">0</strong></div>
+                        </div>
+                    </div>
+                    <div class="analytics-card">
+                        <h4>Top 10 Active Assignees</h4>
+                        <div id="box-assignees"></div>
+                    </div>
+                    <div class="analytics-card">
+                        <h4>Top Resolvers (All Time)</h4>
+                        <div id="box-resolvers"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MODULE 2: RAISE TICKET FORM -->
+            <div id="panel-submit" class="panel">
+                <h3 style="margin-bottom:10px; font-size:13px;">Open New Helpdesk Ticket</h3>
+                <form id="craveForm" novalidate>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Category Group <span style="color:red;">*</span></label>
+                            <select id="category">
+                                <option value="" disabled selected>Select category classification...</option>
+                                <option value="SAP Basis/BTP Platforms">SAP Basis / Cloud BTP Platforms</option>
+                                <option value="IT Infrastructure Hardware">IT Hardware & Assets</option>
+                                <option value="Network & VPN Security">Network & VPN Access</option>
+                                <option value="Human Resources Portal">HR Services Portal</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Priority Tier Level <span style="color:red;">*</span></label>
+                            <select id="priority">
+                                <option value="Low" selected>Low (General Query)</option>
+                                <option value="Medium">Medium (Standard Operational Impact)</option>
+                                <option value="High">High (Work Blocked)</option>
+                                <option value="Urgent">Urgent (Production Down - 4hr SLA)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Input Handler Routing Queue <span style="color:red;">*</span></label>
+                            <select id="inputHandler">
+                                <option value="" disabled selected>Route task assignment queue...</option>
+                                <option value="IT Team">IT Team</option>
+                                <option value="HR">HR</option>
+                                <option value="SAP Support">SAP Support</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Attachments (Optional - Multi File Support)</label>
+                            <input type="file" id="attachmentFiles" multiple style="padding: 4px;">
+                        </div>
+                    </div>
+                    <div class="form-group full-width">
+                        <label>Subject Header Summary <span style="color:red;">*</span></label>
+                        <input type="text" id="subject" placeholder="What requires support summary?">
+                    </div>
+                    <div class="form-group full-width">
+                        <label>Issue Body Context <span style="color:red;">*</span></label>
+                        <textarea id="description" rows="5" placeholder="Elaborate details context..."></textarea>
+                    </div>
+                    <button type="submit" class="btn"><i class="fa-solid fa-paper-plane"></i> Lodge Ticket</button>
+                </form>
+            </div>
+
+            <!-- MODULE 3: CONSOLE -->
+            <div id="panel-queue" class="panel">
+                <div class="console-header-box">
+                    <div class="queue-tabs"><button class="q-tab active">Master Helpdesk Queue System</button></div>
+                    <input type="text" class="instant-search-input" id="queueInstantSearch" placeholder="🔍 Type to search tickets instantly..." oninput="filterConsoleQueueInRealtime(this.value)">
+                </div>
+                <div id="queueList">Loading...</div>
+            </div>
+
+            <!-- MODULE 4: KNOWLEDGE BASE ARTICLES (KBA) -->
+            <div id="panel-kba" class="panel">
+                <div class="console-header-box">
+                    <h3 style="font-size:14px; color:var(--text-main);">Knowledge Base Repository</h3>
+                    <input type="text" class="instant-search-input" id="kbaSearch" placeholder="🔍 Search KB Articles..." oninput="filterKBAInRealtime(this.value)">
+                </div>
+                <div class="kba-grid" id="kbaGrid">
+                    <div class="kba-card" onclick="openKBADetails('VPN Access Setup', 'To connect to Crave VPN, open FortiClient / Cisco AnyConnect, enter server address vpn.craveinfotech.com, use your SSO credentials, and authenticate via Authenticator OTP.')">
+                        <h4><i class="fa-solid fa-network-wired"></i> VPN & Remote Access Setup Guide</h4>
+                        <p>Step-by-step instructions for establishing secure connections to Crave internal network infrastructure.</p>
+                    </div>
+                    <div class="kba-card" onclick="openKBADetails('SAP BTP Role Provisioning', 'For SAP BTP Subaccount access or role mapping, submit a ticket routing to SAP Support queue with manager approval attached.')">
+                        <h4><i class="fa-solid fa-cubes"></i> SAP Cloud BTP Access Request Protocol</h4>
+                        <p>Guidelines on requesting developers / administrators roles within BTP global accounts.</p>
+                    </div>
+                    <div class="kba-card" onclick="openKBADetails('Hardware Replacement SOP', 'Laptops with hardware faults must be brought to IT asset desk. Remote personnel must raise a ticket with dispatch address.')">
+                        <h4><i class="fa-solid fa-laptop-code"></i> Hardware Assets Replacement SOP</h4>
+                        <p>Standard procedure for reporting asset damage, laptop upgrades, and loaner device allocations.</p>
+                    </div>
+                    <div class="kba-card" onclick="openKBADetails('HR Portal Timesheet Logging', 'Timesheets must be submitted by Friday 6 PM IST. For missing projects codes in Workrig, route tickets to HR queue.')">
+                        <h4><i class="fa-solid fa-user-tie"></i> HR Portal & Attendance Portal Support</h4>
+                        <p>Troubleshooting timesheet locks, holiday calendar discrepancies, and payroll portal queries.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MODULE 5: FREQUENTLY ASKED QUESTIONS (FAQ) -->
+            <div id="panel-faq" class="panel">
+                <h3 style="margin-bottom:12px; font-size:14px; color:var(--text-main);">Frequently Asked Questions (Based on Feedback)</h3>
+                <div class="faq-accordion">
+                    <div class="faq-item" onclick="toggleFAQ(this)">
+                        <div class="faq-question"><span>Q: How quickly will my Urgent priority ticket be addressed?</span><i class="fa-solid fa-chevron-down"></i></div>
+                        <div class="faq-answer">Urgent priority tickets carry a strict 4-hour SLA. If unresolved within 4 hours, the ticket console flags an SLA BREACH warning to senior IT admins automatically.</div>
+                    </div>
+                    <div class="faq-item" onclick="toggleFAQ(this)">
+                        <div class="faq-question"><span>Q: Who receives my ticket when I pick a Routing Queue?</span><i class="fa-solid fa-chevron-down"></i></div>
+                        <div class="faq-answer">Selecting an Input Handler (IT Team, HR, SAP Support, or Other) routes your ticket directly to the specialized queue monitored by dedicated teams.</div>
+                    </div>
+                    <div class="faq-item" onclick="toggleFAQ(this)">
+                        <div class="faq-question"><span>Q: How do I attach multiple screenshots or files?</span><i class="fa-solid fa-chevron-down"></i></div>
+                        <div class="faq-answer">Under the Raise Ticket form, use the optional 'Attachments' input field. You can hold Ctrl (or Cmd) and select multiple files simultaneously before submitting.</div>
+                    </div>
+                    <div class="faq-item" onclick="toggleFAQ(this)">
+                        <div class="faq-question"><span>Q: What does 'On-Hold' status mean?</span><i class="fa-solid fa-chevron-down"></i></div>
+                        <div class="faq-answer">On-Hold indicates that resolution is pending external vendor dependencies, employee response, or scheduled maintenance windows.</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MODULE 6: MASTER ADMIN ROLE MANAGEMENT -->
+            <div id="panel-admin" class="panel">
+                <div class="console-header-box">
+                    <div>
+                        <h3 style="font-size:14px; color:var(--text-main);">User Access & Role Control Center</h3>
+                        <p style="font-size:11px; color:var(--text-sub);">Manage platform permissions for Crave Infotech personnel.</p>
+                    </div>
+                    <input type="text" class="instant-search-input" id="adminUserSearch" placeholder="🔍 Search employee by email or name..." oninput="filterAdminUsersInRealtime(this.value)">
+                </div>
+
+                <div style="overflow-x: auto;">
+                    <table style="width:100%; border-collapse:collapse; font-size:12px; text-align:left;">
+                        <thead>
+                            <tr style="background:var(--crave-light); border-bottom:2px solid var(--border-color); color:var(--text-main);">
+                                <th style="padding:10px;">Employee Name</th>
+                                <th style="padding:10px;">Email Address</th>
+                                <th style="padding:10px;">Current Role</th>
+                                <th style="padding:10px;">Registered Date</th>
+                                <th style="padding:10px; text-align:right;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adminUserTableBody">
+                            <tr><td colspan="5" style="padding:12px; color:var(--text-sub);">Loading user accounts...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="portal-bottom-footer">
+            <div>&copy; 2026 All Rights Reserved. Crave Infotech</div>
+            <div>Beta Version | Managed by Crave IT Support</div>
+        </div>
+    </div>
+
+    <!-- ANCHORED SYSTEM GROUP LAYOUT WITH PROACTIVE FLOATING BUBBLE -->
+    <div class="chat-anchor-system-group" onclick="event.stopPropagation()">
+        <div class="chat-proactive-callout-bubble" id="miniProactiveBubble">
+            <button class="chat-proactive-dismiss" onclick="dismissProactiveTeaserBox(event)">&times;</button>
+            Hi, I'm the Crave Helpdesk virtual agent. Click me to get help with IT problems, or chat with a live agent.
+        </div>
+        <div class="chat-launcher-btn" id="miniLauncherBtn" onclick="toggleMiniChatWidget(event)" title="Chat with Mini">
+            <i class="fa-solid fa-comment-dots"></i>
+        </div>
+    </div>
+
+    <!-- CHAT WIDGET CONTAINER -->
+    <div class="chat-widget-container" id="miniChatWidget" onclick="event.stopPropagation()">
+        <div class="chat-header">
+            <div class="chat-header-info">
+                <div class="chat-avatar-frame"></div>
+                <strong style="font-size:11px;">Mini | Helpdesk Assistant</strong>
+            </div>
+            <button class="chat-close-minimize" onclick="toggleMiniChatWidget(event)"><i class="fa-solid fa-minus"></i></button>
+        </div>
+        <div class="chat-body" id="chatMsgBody"></div>
+        <div class="chat-footer">
+            <input type="text" class="chat-input" id="chatUserInputField" placeholder="Search here..." onkeypress="handleChatKeyPress(event)">
+            <button class="btn" style="padding: 4px 8px; border-radius:4px;" onclick="processUserChatInput()"><i class="fa-solid fa-paper-plane"></i></button>
+        </div>
+    </div>
+
+    <!-- MODAL WINDOW OVERLAY FRAME -->
+    <div class="modal-overlay" id="globalModalOverlay">
+        <div class="modal-window">
+            <div class="modal-header">
+                <h3 id="modalHeaderTitle" style="font-size:13px; color:var(--text-main);">Context Information Log</h3>
+                <button class="modal-close-btn" onclick="hideSystemModalFrame()">&times;</button>
+            </div>
+            <div class="modal-body" id="modalBodyContents"></div>
+        </div>
+    </div>
+
+    <script>
+        let categoryChartInstance = null;
+        let statusChartInstance = null;
+        let priorityChartInstance = null; 
+        let masterCachedTicketsArray = []; 
+        let masterCachedUsersArray = [];
+        let currentUserSession = null;
+
+        // --- 1. SESSION VALIDATION & ROLE VISIBILITY CONTROLLER ---
+        async function checkUserSessionAndApplyRoles() {
+            try {
+                const res = await fetch('/api/me');
+                const data = await res.json();
+
+                if (!data.authenticated) {
+                    window.location.href = '/auth/login';
+                    return;
+                }
+
+                currentUserSession = data.user;
+                console.log(`Authenticated: ${currentUserSession.name} (${currentUserSession.role})`);
+
+                // Update Top Header Navigation Banner Title
+                document.getElementById('pageTitle').innerText = `Welcome, ${currentUserSession.name} [${currentUserSession.role}]`;
+
+                // APPLY ROLE VISIBILITY RULES ACROSS SIDEBAR NAVIGATION
+                if (currentUserSession.role === 'Employee') {
+                    document.getElementById('nav-dashboard').style.display = 'none';
+                    document.getElementById('nav-queue').style.display = 'none';
+                    document.getElementById('nav-admin').style.display = 'none';
+                    navigate('submit');
+                } else if (currentUserSession.role === 'Helpdesk') {
+                    document.getElementById('nav-dashboard').style.display = 'flex';
+                    document.getElementById('nav-queue').style.display = 'flex';
+                    document.getElementById('nav-admin').style.display = 'none';
+                    navigate('queue');
+                    loadQueue();
+                } else if (currentUserSession.role === 'Admin') {
+                    document.getElementById('nav-dashboard').style.display = 'flex';
+                    document.getElementById('nav-queue').style.display = 'flex';
+                    document.getElementById('nav-admin').style.display = 'flex';
+                    navigate('dashboard');
+                }
+            } catch (err) {
+                console.error("Session evaluation error:", err);
+                window.location.href = '/auth/login';
+            }
+        }
+
+        // --- 2. SIDEBAR RESIZER WORKFLOWS ---
+        const sidebar = document.getElementById('appSidebar');
+        const resizer = document.getElementById('sidebarResizer');
+        const mainContent = document.getElementById('appMainContent');
+
+        resizer.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            document.addEventListener('mousemove', dragResizeExecution);
+            document.addEventListener('mouseup', killResizeListeners);
+        });
+
+        function dragResizeExecution(e) {
+            let width = e.clientX;
+            if (width >= 210 && width <= 400) {
+                sidebar.style.width = width + 'px';
+                mainContent.style.marginLeft = width + 'px';
+            }
+        }
+
+        function killResizeListeners() {
+            document.removeEventListener('mousemove', dragResizeExecution);
+            document.removeEventListener('mouseup', killResizeListeners);
+        }
+
+        // --- 3. THEME ROUTING & UTILITY FUNCTIONS ---
+        function initializePlatformThemeRouting() {
+            const savedSetting = localStorage.getItem('crave-manual-theme');
+            if (savedSetting) {
+                applyThemeInterface(savedSetting);
+            } else {
+                const systemPref = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+                applyThemeInterface(systemPref);
+            }
+        }
+
+        function applyThemeInterface(theme) {
+            document.documentElement.setAttribute('data-theme', theme);
+            const btn = document.getElementById('themeToggleButton');
+            btn.innerHTML = theme === 'dark' ? '<i class="fa-solid fa-moon"></i>' : '<i class="fa-solid fa-sun"></i>';
+            if(document.getElementById('panel-dashboard').classList.contains('active')) loadAnalytics();
+        }
+
+        function togglePlatformThemeMode() {
+            const current = document.documentElement.getAttribute('data-theme');
+            const target = current === 'dark' ? 'light' : 'dark';
+            localStorage.setItem('crave-manual-theme', target); 
+            applyThemeInterface(target);
+        }
+
+        function navigate(panel) {
+            document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+            document.getElementById(`panel-${panel}`).classList.add('active');
+            const targetNav = document.getElementById(`nav-${panel}`);
+            if (targetNav) targetNav.classList.add('active');
+            
+            let titles = { 
+                'dashboard': 'Overview Dashboard', 
+                'submit': 'Raise Ticket', 
+                'queue': 'Ticket Console', 
+                'kba': 'Knowledge Base (KBA)', 
+                'faq': 'Help & FAQs',
+                'admin': 'Master Role Manager'
+            };
+            
+            const prefix = currentUserSession ? `Welcome, ${currentUserSession.name} | ` : '';
+            document.getElementById('pageTitle').innerText = `${prefix}${titles[panel] || 'HelpDesk'}`;
+            if(panel === 'dashboard') loadAnalytics();
+        }
+
+        function triggerDisplayModalPopout(title, htmlContent) {
+            document.getElementById('modalHeaderTitle').innerText = title;
+            document.getElementById('modalBodyContents').innerHTML = htmlContent;
+            document.getElementById('globalModalOverlay').classList.add('active');
+        }
+
+        document.getElementById('globalModalOverlay').onclick = function(e) {
+            if(e.target.id === 'globalModalOverlay') document.getElementById('globalModalOverlay').classList.remove('active');
+        };
+
+        function hideSystemModalFrame() { document.getElementById('globalModalOverlay').classList.remove('active'); }
+
+        function populateTimeframeSlicers() {
+            const yearSelect = document.getElementById('slicerYear');
+            const currentYear = 2026;
+            yearSelect.innerHTML = `<option value="all">All Years</option>`;
+            for(let y = currentYear; y >= currentYear - 2; y--) {
+                yearSelect.innerHTML += `<option value="${y}">${y}</option>`;
+            }
+        }
+
+        // --- 4. TICKET SUBMISSION HANDLER ---
+        document.getElementById('craveForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const category = document.getElementById('category').value;
+            const priority = document.getElementById('priority').value;
+            const handler = document.getElementById('inputHandler').value;
+            const subject = document.getElementById('subject').value.trim();
+            const description = document.getElementById('description').value.trim();
+            const filesInput = document.getElementById('attachmentFiles').files;
+
+            if (!category || !subject || !description || !handler) {
+                alert("⚠️ Error: Please fill out all mandatory fields! (Category, Routing Handler, Subject, and Description are required).");
+                return;
+            }
+
+            let fileNames = [];
+            for(let i=0; i<filesInput.length; i++) { fileNames.push(filesInput[i].name); }
+
+            const data = { 
+                category, 
+                priority, 
+                subject, 
+                description, 
+                user_id: currentUserSession ? currentUserSession.email : 'CI-USER-101', 
+                input_handler: handler, 
+                attachments: fileNames.join(', ') 
+            };
+
+            try {
+                const res = await fetch('/api/tickets', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                const out = await res.json();
+                if(out.success) {
+                    alert(`🎉 Success!\nYour ticket has been submitted successfully with Ticket ID: ${out.ticket_ref}`);
+                    document.getElementById('craveForm').reset();
+                    document.getElementById('priority').value = "Low";
+                    if (currentUserSession.role !== 'Employee') {
+                        navigate('queue');
+                        loadQueue();
+                    }
+                } else {
+                    alert("Submission failed on server. Please check log parameters.");
+                }
+            } catch (err) {
+                alert("Connection error. Could not connect to the backend server.");
+            }
+        });
+
+        // --- 5. TICKET CONSOLE & HISTORY MODAL ENGINE ---
+        async function loadQueue() {
+            const res = await fetch(`/api/tickets?mode=all`);
+            masterCachedTicketsArray = await res.json();
+            renderTicketRowsIntoConsole(masterCachedTicketsArray);
+            document.getElementById('queueInstantSearch').value = '';
+        }
+
+        function renderTicketRowsIntoConsole(tickets) {
+            const target = document.getElementById('queueList');
+            target.innerHTML = '';
+
+            if(!tickets.length) { target.innerHTML = '<p style="color:var(--text-sub); padding:10px;">No records located matching search parameters.</p>'; return; }
+
+            tickets.forEach(t => {
+                let breachTemplate = t.sla_breached ? `<span class="breach-alert"><i class="fa-solid fa-triangle-exclamation"></i> SLA BREACHED</span>` : '';
+                let div = document.createElement('div');
+                div.className = `ticket-list-item ${t.sla_breached ? 'breached' : ''}`;
+                div.onclick = () => openTicketContextPopoutWindow(t.id);
+                
+                div.innerHTML = `
+                    <div class="ticket-meta">
+                        <div class="ticket-title-row">
+                            <span class="ref-tag">${t.ticket_ref}</span>
+                            <strong style="font-size:12px; color:var(--text-main);">${t.subject}</strong>
+                            <span class="badge ${t.status}">${t.status}</span>
+                            <span class="p-badge ${t.priority}">${t.priority}</span>
+                            ${breachTemplate}
+                        </div>
+                        <span style="font-size:11px; color:var(--text-sub); margin-top:2px;">
+                            Category: <strong>${t.category}</strong> | Routing Group: <strong>${t.input_handler || 'General'}</strong> | Assignee: <strong>${t.assigned_to}</strong>
+                        </span>
+                    </div>
+                `;
+                target.appendChild(div);
+            });
+        }
+
+        function filterConsoleQueueInRealtime(keyword) {
+            const cleanKey = keyword.toLowerCase().trim();
+            if(!cleanKey) { renderTicketRowsIntoConsole(masterCachedTicketsArray); return; }
+
+            const filtered = masterCachedTicketsArray.filter(t => 
+                t.ticket_ref.toLowerCase().includes(cleanKey) ||
+                t.subject.toLowerCase().includes(cleanKey) ||
+                t.category.toLowerCase().includes(cleanKey) ||
+                (t.input_handler && t.input_handler.toLowerCase().includes(cleanKey)) ||
+                t.description.toLowerCase().includes(cleanKey) ||
+                t.status.toLowerCase().includes(cleanKey)
+            );
+            renderTicketRowsIntoConsole(filtered);
+        }
+
+        async function openTicketContextPopoutWindow(id) {
+            const res = await fetch(`/api/tickets?mode=all`);
+            const all = await res.json();
+            const t = all.find(item => item.id == id);
+            if(!t) return;
+
+            const histRes = await fetch(`/api/tickets/${t.ticket_ref}/history`);
+            let timelineHtml = '';
+            if(histRes.ok) {
+                const hData = await histRes.json();
+                timelineHtml = hData.history.map(h => `
+                    <div style="border-left:2px solid var(--crave-blue); padding-left:10px; margin-bottom:4px; font-size:11px;">
+                        <span style="color:var(--text-sub);">${new Date(h.changed_at).toLocaleString()}</span>
+                        <p style="color:var(--text-main);">[${h.changed_by}] ${h.note}</p>
+                    </div>
+                `).join('');
+            }
+
+            let attachmentBlock = t.attachments ? `<div style="font-size:11px; color:var(--text-sub); margin-top:4px;">📎 <strong>Files:</strong> ${t.attachments}</div>` : '';
+
+            let htmlStructure = `
+                <div style="display:flex; flex-direction:column; gap:12px; font-size:12px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <span class="ref-tag">${t.ticket_ref}</span>
+                        <div style="display:flex; gap:4px;">
+                            <span class="badge ${t.status}">${t.status}</span>
+                            <span class="p-badge ${t.priority}">${t.priority}</span>
+                        </div>
+                    </div>
+                    <strong style="font-size:13px; color:var(--text-main);">${t.subject}</strong>
+                    <div style="background:var(--crave-light); padding:10px; border-radius:6px; color:var(--text-main); max-height:100px; overflow-y:auto; white-space:pre-wrap;">${t.description}</div>
+                    ${attachmentBlock}
+                    <div style="font-size:11px; color:var(--text-sub); display:grid; grid-template-columns:1fr 1fr; gap:4px;">
+                        <div>Category: <strong>${t.category}</strong></div>
+                        <div>Routing Handler: <strong>${t.input_handler || 'Unspecified'}</strong></div>
+                        <div>Assigned Tech: <strong>${t.assigned_to}</strong></div>
+                        <div>Date Raised: <strong>${new Date(t.created_at).toLocaleString()}</strong></div>
+                    </div>
+                    <hr style="border:none; border-top:1px solid var(--border-color);">
+                    <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
+                        <input type="text" id="pop-ag-${t.id}" placeholder="Assign Operator..." style="padding:4px 8px; font-size:12px; max-width:130px;" value="${t.assigned_to !== 'Unassigned' ? t.assigned_to : ''}">
+                        <button class="btn-sec" style="background:var(--crave-blue); color:white;" onclick="assignTicket(${t.id}, true)">Assign</button>
+                        <button class="btn-sec" onclick="modifyStatus(${t.id}, 'In-Progress', true)">In-Progress</button>
+                        <button class="btn-sec" style="background:var(--badge-hold-bg); color:var(--badge-hold-txt);" onclick="modifyStatus(${t.id}, 'On-Hold', true)">Hold</button>
+                        <button class="btn-sec" style="background:#16A34A; color:white;" onclick="modifyStatus(${t.id}, 'Closed', true)">Close</button>
+                    </div>
+                    <hr style="border:none; border-top:1px solid var(--border-color);">
+                    <strong>Audit Timeline Logs:</strong>
+                    <div style="max-height:80px; overflow-y:auto;">${timelineHtml}</div>
+                </div>
+            `;
+            triggerDisplayModalPopout(`Ticket Context Specification Log`, htmlStructure);
+        }
+
+        async function assignTicket(id, refreshModal = false) {
+            const agentName = document.getElementById(`pop-ag-${id}`).value.trim();
+            if(!agentName) return alert("Input support handler assignment routing token.");
+            await fetch(`/api/tickets/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ assigned_to: agentName, note: `Assigned to: ${agentName}` })
+            });
+            loadQueue();
+            if(refreshModal) openTicketContextPopoutWindow(id);
+        }
+
+        async function modifyStatus(id, stat, refreshModal = false) {
+            const comment = prompt(`Provide tracking logs entry reason update for ${stat}:`);
+            if(comment === null) return;
+            await fetch(`/api/tickets/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: stat, note: comment })
+            });
+            loadQueue();
+            if(refreshModal) {
+                if(stat === 'Closed') hideSystemModalFrame(); 
+                else openTicketContextPopoutWindow(id);
+            }
+        }
+
+        // --- 6. MASTER ADMIN USER ROLE MANAGEMENT HANDLERS ---
+        async function loadAdminUsersList() {
+            try {
+                const res = await fetch('/api/admin/users');
+                if (!res.ok) {
+                    alert("Failed to load user access list. Ensure you are logged in as Admin.");
+                    return;
+                }
+                masterCachedUsersArray = await res.json();
+                renderAdminUserRows(masterCachedUsersArray);
+            } catch (err) {
+                console.error("Error loading user management table:", err);
+            }
+        }
+
+        function renderAdminUserRows(users) {
+            const tbody = document.getElementById('adminUserTableBody');
+            tbody.innerHTML = '';
+
+            if (!users.length) {
+                tbody.innerHTML = `<tr><td colspan="5" style="padding:12px; color:var(--text-sub);">No registered Crave employees located.</td></tr>`;
+                return;
+            }
+
+            users.forEach(u => {
+                const tr = document.createElement('tr');
+                tr.style.borderBottom = '1px solid var(--border-color)';
+                tr.innerHTML = `
+                    <td style="padding:10px; font-weight:600; color:var(--text-main);">${u.name}</td>
+                    <td style="padding:10px; color:var(--text-sub);">${u.email}</td>
+                    <td style="padding:10px;">
+                        <select id="role-select-${u.id}" class="slicer-control" style="font-weight:600;">
+                            <option value="Employee" ${u.role === 'Employee' ? 'selected' : ''}>Employee (End User)</option>
+                            <option value="Helpdesk" ${u.role === 'Helpdesk' ? 'selected' : ''}>Helpdesk (Operator)</option>
+                            <option value="Admin" ${u.role === 'Admin' ? 'selected' : ''}>Admin (Master Developer)</option>
+                        </select>
+                    </td>
+                    <td style="padding:10px; color:var(--text-sub);">${new Date(u.created_at).toLocaleDateString()}</td>
+                    <td style="padding:10px; text-align:right;">
+                        <button class="btn" style="padding:4px 8px; font-size:11px;" onclick="updateEmployeeRole(${u.id})">
+                            <i class="fa-solid fa-floppy-disk"></i> Save Role
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        async function updateEmployeeRole(userId) {
+            const selectedRole = document.getElementById(`role-select-${userId}`).value;
+            try {
+                const res = await fetch(`/api/admin/users/${userId}/role`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ role: selectedRole })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    alert(`🎉 Success: User role updated to ${selectedRole}`);
+                    loadAdminUsersList();
+                } else {
+                    alert(`Error updating role: ${data.error}`);
+                }
+            } catch (err) {
+                alert("Failed to communicate with server.");
+            }
+        }
+
+        function filterAdminUsersInRealtime(keyword) {
+            const cleanKey = keyword.toLowerCase().trim();
+            if (!cleanKey) {
+                renderAdminUserRows(masterCachedUsersArray);
+                return;
+            }
+            const filtered = masterCachedUsersArray.filter(u => 
+                u.name.toLowerCase().includes(cleanKey) || 
+                u.email.toLowerCase().includes(cleanKey) ||
+                u.role.toLowerCase().includes(cleanKey)
+            );
+            renderAdminUserRows(filtered);
+        }
+
+        // --- 7. KBA & FAQ HANDLERS ---
+        function toggleFAQ(element) { element.classList.toggle('active'); }
+
+        function openKBADetails(title, details) {
+            triggerDisplayModalPopout(`KBA: ${title}`, `<div style="font-size:12px; line-height:1.5; color:var(--text-main);">${details}</div>`);
+        }
+
+        function filterKBAInRealtime(keyword) {
+            const cleanKey = keyword.toLowerCase().trim();
+            const cards = document.querySelectorAll('.kba-card');
+            cards.forEach(card => {
+                card.style.display = card.innerText.toLowerCase().includes(cleanKey) ? 'block' : 'none';
+            });
+        }
+
+        // --- 8. ANALYTICS & CHARTS RENDER ENGINE ---
+        function refreshAnalyticalVisualGraphs(categoryData, statusData, priorityData) {
+            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            const textThemeColor = isDark ? '#F8FAFC' : '#0F172A';
+            const borderThemeColor = isDark ? '#334155' : '#CBD5E1';
+
+            const barLabels = categoryData.map(c => c.category);
+            const barCounts = categoryData.map(c => c.count);
+
+            if (categoryChartInstance) categoryChartInstance.destroy();
+            categoryChartInstance = new Chart(document.getElementById('categoryBarChartCanvas').getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: barLabels.length ? barLabels : ['No Data'],
+                    datasets: [{ data: barCounts.length ? barCounts : [0], backgroundColor: '#0A58CA', borderRadius: 2 }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { grid: { color: 'transparent' }, ticks: { color: textThemeColor, font: { size: 9 } } },
+                        y: { grid: { color: borderThemeColor }, ticks: { color: textThemeColor, stepSize: 1, font: { size: 9 } } }
+                    }
+                }
+            });
+
+            const pieLabels = statusData.map(s => s.status);
+            const pieCounts = statusData.map(s => s.count);
+            const colorMapping = { 'Open': '#DC2626', 'In-Progress': '#D97706', 'On-Hold': '#EA580C', 'Closed': '#16A34A' };
+            const pieColors = pieLabels.map(l => colorMapping[l] || '#475569');
+
+            if (statusChartInstance) statusChartInstance.destroy();
+            statusChartInstance = new Chart(document.getElementById('statusPieChartCanvas').getContext('2d'), {
+                type: 'pie',
+                data: {
+                    labels: pieLabels.length ? pieLabels : ['Empty Queue'],
+                    datasets: [{ data: pieCounts.length ? pieCounts : [0], backgroundColor: pieCounts.length ? pieColors : ['#CBD5E1'] }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { position: 'right', labels: { color: textThemeColor, font: { size: 8 } } } }
+                }
+            });
+
+            const getPriorityCount = (level) => {
+                const match = priorityData.find(p => p.priority.toLowerCase() === level.toLowerCase());
+                return match ? match.count : 0;
+            };
+            const priorityLevels = ['Low', 'Medium', 'High', 'Urgent'];
+            const priorityCounts = priorityLevels.map(lvl => getPriorityCount(lvl));
+
+            if (priorityChartInstance) priorityChartInstance.destroy();
+            priorityChartInstance = new Chart(document.getElementById('priorityBarChartCanvas').getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: priorityLevels,
+                    datasets: [{
+                        data: priorityCounts,
+                        backgroundColor: ['#64748B', '#0A58CA', '#EA580C', '#DC2626'],
+                        borderRadius: 2
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { grid: { color: 'transparent' }, ticks: { color: textThemeColor, font: { size: 9 } } },
+                        y: { grid: { color: borderThemeColor }, ticks: { color: textThemeColor, stepSize: 1, font: { size: 9 } } }
+                    }
+                }
+            });
+        }
+
+        async function loadAnalytics() {
+            const selYear = document.getElementById('slicerYear').value;
+            const selMonth = document.getElementById('slicerMonth').value;
+            
+            try {
+                const res = await fetch(`/api/analytics?year=${selYear}&month=${selMonth}`);
+                const data = await res.json();
+                
+                const getCount = (status) => {
+                    const match = data.statusCounts.find(s => s.status === status);
+                    return match ? match.count : 0;
+                };
+                
+                document.getElementById('m-open').innerText = getCount('Open');
+                document.getElementById('m-progress').innerText = getCount('In-Progress');
+                document.getElementById('m-hold').innerText = getCount('On-Hold'); 
+                document.getElementById('m-closed').innerText = getCount('Closed');
+
+                const getPriorityCount = (level) => {
+                    const match = data.priorityCounts.find(p => p.priority.toLowerCase() === level.toLowerCase());
+                    return match ? match.count : 0;
+                };
+                document.getElementById('p-count-urgent').innerText = getPriorityCount('Urgent');
+                document.getElementById('p-count-high').innerText = getPriorityCount('High');
+                document.getElementById('p-count-medium').innerText = getPriorityCount('Medium');
+                document.getElementById('p-count-low').innerText = getPriorityCount('Low');
+
+                document.getElementById('box-assignees').innerHTML = data.topAssignees.length ? data.topAssignees.map(a => `
+                    <div class="data-row"><span>👤 ${a.assigned_to}</span><strong>${a.count} Active</strong></div>
+                `).join('') : '<p style="color:var(--text-sub); font-size:11px;">No active workloads.</p>';
+
+                document.getElementById('box-resolvers').innerHTML = data.topResolvers.length ? data.topResolvers.map(r => `
+                    <div class="data-row"><span>🏅 ${r.resolver}</span><strong style="color:#16A34A;">${r.count} Closed</strong></div>
+                `).join('') : '<p style="color:var(--text-sub); font-size:11px;">No historical records closed.</p>';
+
+                refreshAnalyticalVisualGraphs(data.categoryCounts, data.statusCounts, data.priorityCounts);
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        // --- 9. MINI CHATBOT ASSISTANT HANDLERS ---
+        function toggleMiniChatWidget(event) {
+            if(event) event.stopPropagation(); 
+            const widget = document.getElementById('miniChatWidget');
+            const proactiveBubble = document.getElementById('miniProactiveBubble');
+            
+            widget.classList.toggle('active');
+            
+            if(widget.classList.contains('active')) {
+                proactiveBubble.classList.add('hidden');
+                if(document.getElementById('chatMsgBody').children.length === 0) {
+                    initializeMiniBotGreeting();
+                }
+            } else {
+                if(localStorage.getItem('mini-proactive-dismissed') !== 'true') {
+                    proactiveBubble.classList.remove('hidden');
+                }
+            }
+        }
+
+        function dismissProactiveTeaserBox(event) {
+            event.stopPropagation();
+            document.getElementById('miniProactiveBubble').classList.add('hidden');
+            localStorage.setItem('mini-proactive-dismissed', 'true');
+        }
+
+        function handleGlobalClickAwayCloseEvent(event) {
+            const widget = document.getElementById('miniChatWidget');
+            const group = document.querySelector('.chat-anchor-system-group');
+            
+            if (widget.classList.contains('active') && !group.contains(event.target)) {
+                widget.classList.remove('active');
+                if(localStorage.getItem('mini-proactive-dismissed') !== 'true') {
+                    document.getElementById('miniProactiveBubble').classList.remove('hidden');
+                }
+            }
+        }
+
+        function initializeMiniBotGreeting() {
+            const container = document.getElementById('chatMsgBody');
+            container.innerHTML = '';
+            
+            injectMiniSpeechBubble("Hi, I'm the Crave Helpdesk virtual agent. Click me to get help with IT problems, or chat with a live agent.");
+            
+            setTimeout(() => {
+                const nameGreeting = currentUserSession ? currentUserSession.name.split(' ')[0] : 'there';
+                injectMiniSpeechBubble(`Hi ${nameGreeting}, I can help you with common IT issues. Choose an option below to proceed:`);
+                injectMiniOptionsSelectionRibbon();
+            }, 500);
+        }
+
+        function injectMiniSpeechBubble(text) {
+            const container = document.getElementById('chatMsgBody');
+            const bubble = document.createElement('div');
+            bubble.className = "chat-bubble agent";
+            bubble.innerText = text;
+            container.appendChild(bubble);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function injectUserSpeechBubble(text) {
+            const container = document.getElementById('chatMsgBody');
+            const bubble = document.createElement('div');
+            bubble.className = "chat-bubble user";
+            bubble.innerText = text;
+            container.appendChild(bubble);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function injectMiniOptionsSelectionRibbon() {
+            const container = document.getElementById('chatMsgBody');
+            const box = document.createElement('div');
+            box.className = "chat-options-box";
+            
+            const options = [
+                { text: "Open an IT Ticket", action: () => handleMiniContextRoute("Open an IT Ticket", "submit") },
+                { text: "Check Ticket Status", action: () => handleMiniContextRoute("Check Ticket Status", "queue") },
+                { text: "Browse Knowledge Base (KBA)", action: () => handleMiniContextRoute("Browse Knowledge Base (KBA)", "kba") },
+                { text: "..or click here for additional options", action: () => handleMiniContextRoute("Additional options", "dashboard") }
+            ];
+
+            options.forEach(o => {
+                const btn = document.createElement('button');
+                btn.className = "chat-opt-btn";
+                btn.innerText = o.text;
+                btn.onclick = o.action;
+                box.appendChild(btn);
+            });
+            container.appendChild(box);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function handleMiniContextRoute(label, targetPanel) {
+            injectUserSpeechBubble(label);
+            setTimeout(() => {
+                navigate(targetPanel);
+                if(targetPanel === 'queue') loadQueue();
+                injectMiniSpeechBubble(`I have loaded the ${label} module workspace panel interface.`);
+                injectMiniOptionsSelectionRibbon();
+            }, 300);
+        }
+
+        function handleChatKeyPress(e) { if(e.key === 'Enter') processUserChatInput(); }
+
+        function processUserChatInput() {
+            const input = document.getElementById('chatUserInputField');
+            const query = input.value.trim();
+            if(!query) return;
+
+            injectUserSpeechBubble(query);
+            input.value = "";
+
+            setTimeout(() => {
+                const norm = query.toLowerCase();
+                if(norm.includes('ticket') || norm.includes('raise') || norm.includes('open')) {
+                    navigate('submit');
+                    injectMiniSpeechBubble("Switched viewport to Raise Ticket form view.");
+                    injectMiniOptionsSelectionRibbon();
+                } else if(norm.includes('kba') || norm.includes('knowledge') || norm.includes('guide')) {
+                    navigate('kba');
+                    injectMiniSpeechBubble("Opened Knowledge Base Articles repository.");
+                    injectMiniOptionsSelectionRibbon();
+                } else if(norm.includes('faq') || norm.includes('help')) {
+                    navigate('faq');
+                    injectMiniSpeechBubble("Opened Help & Frequently Asked Questions.");
+                    injectMiniOptionsSelectionRibbon();
+                } else if(norm.includes('dashboard') || norm.includes('overview')) {
+                    navigate('dashboard');
+                    injectMiniSpeechBubble("Loaded primary overview metrics reporting engine.");
+                    injectMiniOptionsSelectionRibbon();
+                } else if(norm.includes('console') || norm.includes('status')) {
+                    navigate('queue'); loadQueue();
+                    injectMiniSpeechBubble("Console queue logs synchronized.");
+                    injectMiniOptionsSelectionRibbon();
+                } else {
+                    injectMiniSpeechBubble("I can help with Helpdesk support only, please describe your query precisely.");
+                    injectMiniOptionsSelectionRibbon();
+                }
+            }, 400);
+        }
+
+        // --- 10. SYSTEM INITIALIZATION CALLS ---
+        populateTimeframeSlicers();
+        initializePlatformThemeRouting();
+        checkUserSessionAndApplyRoles();
+
+        if(localStorage.getItem('mini-proactive-dismissed') === 'true') {
+            document.getElementById('miniProactiveBubble').classList.add('hidden');
+        }
+    </script>
+</body>
+</html>
