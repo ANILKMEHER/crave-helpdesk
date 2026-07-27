@@ -339,3 +339,11 @@ app.get('/api/analytics', (req, res) => {
 app.listen(PORT, () => {
     console.log(`Server running at http://localhost:${PORT}`);
 });
+// At the bottom of server.js
+if (process.env.NODE_ENV !== 'production') {
+    app.listen(PORT, () => {
+        console.log(`Server running locally at http://localhost:${PORT}`);
+    });
+}
+
+module.exports = app;
